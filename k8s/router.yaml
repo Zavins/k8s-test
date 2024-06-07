@@ -1,0 +1,35 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: k8s-test
+spec:
+  routes:
+    - kind: Rule
+      match: HostRegexp(`{any:.+}`) && PathPrefix(`/_api/course_search`) # temp
+      middlewares:
+        - name: strip-k8s-test-prefix
+        - name: gateway
+      services:
+        - kind: Service
+          name: k8s-test
+          passHostHeader: true
+          port: 80
+          responseForwarding:
+            flushInterval: 1ms
+          # sticky:
+          #   cookie:
+          #     httpOnly: true
+          #     name: cookie
+          #     secure: true
+          #     sameSite: none
+          strategy: RoundRobin
+          weight: 10
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-k8s-test-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /_api/course_search
